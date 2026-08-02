@@ -8,18 +8,18 @@ warnings.filterwarnings("ignore")
 
 class MarketDataFetcher:
     """
-    Extrait les chaînes d'options depuis Yahoo Finance et applique
-    les filtres de liquidité essentiels pour la modélisation.
+    Extracts option chains from Yahoo Finance and applies
+    essential liquidity filters for modeling.
     """
 
     def __init__(self, ticker_symbol: str):
         self.ticker_symbol = ticker_symbol
         self.ticker = yf.Ticker(ticker_symbol)
 
-        # Récupération directe du prix spot
+        # Direct retrieval of the spot price
         self.spot_price = float(self.ticker.history(period='1d')['Close'].iloc[-1])
 
-        # Chemin du fichier cache
+        # Cache file path configuration
         current_file_path = os.path.abspath(__file__)
         market_data_dir = os.path.dirname(current_file_path)
         quant_engine_dir = os.path.dirname(market_data_dir)
@@ -27,26 +27,26 @@ class MarketDataFetcher:
         self.cache_dir = os.path.join(project_root, "data")
         self.cache_file = os.path.join(self.cache_dir, f"{self.ticker_symbol}_options_cache.csv")
 
-        # Vérification que le dossier data/ existe
+        # Ensure the data/ directory exists, create it otherwise
         if not os.path.exists(self.cache_dir):
             os.makedirs(self.cache_dir)
 
     def fetch_options(self, min_volume: int = 10, use_cache: bool = True) -> pd.DataFrame:
         """
-        Récupère les options. Utilise le fichier local si use_cache=True et que le fichier existe.
+        Retrieves options. Uses the local file if use_cache=True and the file exists.
         """
 
-        # Lecture du cache
+        # Read from cache
         if use_cache and os.path.exists(self.cache_file):
-            print(f"Chargement des données depuis le cache local : {self.cache_file}")
+            print(f"Loading data from local cache: {self.cache_file}")
             df = pd.read_csv(self.cache_file)
             return df
 
-        # Si le cache est désactivé ou absent
-        print("Téléchargement des données depuis Yahoo Finance...")
+        # If cache is disabled or missing
+        print("Downloading data from Yahoo Finance...")
         expirations = self.ticker.options
         if not expirations:
-            raise ValueError(f"Aucune option disponible pour {self.ticker_symbol}")
+            raise ValueError(f"No options available for {self.ticker_symbol}")
 
         options_data = []
 
@@ -61,11 +61,11 @@ class MarketDataFetcher:
 
             chain = pd.concat([calls, puts], ignore_index=True)
 
-            # Calcul du time to maturity (T) en années
+            # Compute time to maturity (T) in years
             exp_datetime = datetime.strptime(exp_date, "%Y-%m-%d")
             chain['T'] = (exp_datetime - datetime.now()).days / 365.25
 
-            # Supprime l'option des données si elle est échue
+            # Drop expired options
             if chain['T'].iloc[0] <= 0:
                 continue
 
@@ -74,11 +74,11 @@ class MarketDataFetcher:
 
         df = pd.concat(options_data, ignore_index=True)
 
-        # Calculs de la moneyness et du mid price
+        # Compute moneyness and mid price
         df['Moneyness'] = df['strike'] / self.spot_price
         df['Mid_Price'] = (df['bid'] + df['ask']) / 2.0
 
-        # Filtre de liquidité pour ne garder que les options les plus échangées
+        # Liquidity filter to keep most exchanged options
         mask_valid = (
                 (df['volume'] >= min_volume) &
                 (df['bid'] > 0) &
@@ -89,8 +89,8 @@ class MarketDataFetcher:
         columns = ['Expiration', 'T', 'strike', 'Option_Type', 'Moneyness', 'bid', 'ask', 'Mid_Price',
                    'impliedVolatility']
 
-        # Sauvegarde les données dans le fichier cache
-        print(f"Sauvegarde des données dans le cache : {self.cache_file}")
+        # Save data into the cache file
+        print(f"Saving data to cache: {self.cache_file}")
         df_final = df[columns]
         df_final.to_csv(self.cache_file, index=False)
 
