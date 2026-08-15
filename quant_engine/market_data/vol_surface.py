@@ -11,13 +11,15 @@ class VolatilitySurface:
     """
 
     def __init__(self, options_df: pd.DataFrame):
-        # For a clean surface, we only keep Calls (or ideally Out-Of-The-Money options).
-        # In-The-Money options are often illiquid and add "noise" to the surface.
-        self.data = options_df[options_df['Option_Type'] == 'call'].copy()
+        # Keep the entire DataFrame because the fetcher filtered for OTM Puts and OTM Calls
+        self.data = options_df.copy()
 
         # Remove null or anomalous values
         self.data = self.data.dropna(subset=['My_Implied_Vol'])
         self.data = self.data[self.data['My_Implied_Vol'] > 0.01]
+
+        # Filter out ultra-short maturities (e.g., < 7 days) to remove market noise
+        self.data = self.data[self.data['T'] > 0.02]
 
         # Calculate Log-Moneyness ln(K/S) to ensure mathematical symmetry
         self.data['Log_Moneyness'] = np.log(self.data['Moneyness'])
@@ -55,7 +57,7 @@ class VolatilitySurface:
             points=(X_points, Y_points),
             values=Z_points,
             xi=(X_grid, Y_grid),
-            method='cubic'
+            method='linear'
         )
 
         # 3D Plotting with Matplotlib
