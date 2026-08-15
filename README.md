@@ -31,23 +31,29 @@ volatility-surface-pricer/
 ├── data/                       # Local market data storage
 │
 ├── examples/                   # Executable scripts for demonstration
+│   ├── demo_surface.py
 │   ├── demo_autocall.py
-│   ├── demo_fetcher.py
 │   ├── demo_heston.py
 │   └── hedging_demo.py
 │
 ├── quant_engine/               # Core library
 │   ├── market_data/
 │   │   ├── option_fetcher.py
+│   │   ├── vol_solver.py
 │   │   └── vol_surface.py
+│   ├── instruments/
+│   │   ├── base_instrument.py
+│   │   ├── vanilla.py
+│   │   └── autocall.py
 │   ├── models/
-│   │   ├── base.py
 │   │   ├── black_scholes.py
 │   │   └── heston.py
-│   ├── risk/
-│   │   └── delta_hedging.py
-│   └── structuring/
-│       └── __init__.py
+│   ├── engines/
+│   │   ├── analytical.py
+│   │   └── monte_carlo.py
+│   └── risk/
+│       ├── greeks.py
+│       └── delta_hedging.py
 │
 ├── tests/                      # Unit testing suite
 │   ├── test_bs.py
