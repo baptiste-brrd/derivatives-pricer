@@ -86,6 +86,17 @@ class MarketDataFetcher:
         )
         df = df[mask_valid].copy()
 
+        # Keep OTM options to have a clean volatility surface
+        mask_otm = (
+                ((df['Option_Type'] == 'call') & (df['Moneyness'] > 1.0)) |
+                ((df['Option_Type'] == 'put') & (df['Moneyness'] < 1.0))
+        )
+        df = df[mask_otm].copy()
+
+        # Smile limits to remove illiquid options
+        mask_smile = (df['Moneyness'] >= 0.8) & (df['Moneyness'] <= 1.2)
+        df = df[mask_smile].copy()
+
         columns = ['Expiration', 'T', 'strike', 'Option_Type', 'Moneyness', 'bid', 'ask', 'Mid_Price',
                    'impliedVolatility']
 
