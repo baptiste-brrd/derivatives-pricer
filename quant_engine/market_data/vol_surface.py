@@ -17,6 +17,7 @@ class VolatilitySurface:
         # Remove null or anomalous values
         self.data = self.data.dropna(subset=['My_Implied_Vol'])
         self.data = self.data[self.data['My_Implied_Vol'] > 0.01]
+        self.data = self.data[self.data['My_Implied_Vol'] < 2.00]
 
         # Filter out ultra-short maturities (e.g., < 7 days) to remove market noise
         self.data = self.data[self.data['T'] > 0.02]
