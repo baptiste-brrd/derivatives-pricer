@@ -44,7 +44,7 @@ def main():
 
     # 3. Comparison
     diff = abs(exact_price - mc_price)
-    print("\n--- VERDICT ---")
+    print("\n--- COMPARISON ---")
     print(f"Absolute difference between theory and simulation : {diff:.4f} $")
 
     if diff < 0.05:
