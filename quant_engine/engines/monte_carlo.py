@@ -43,7 +43,11 @@ class MonteCarloEngine:
         expected_payoff = np.mean(payoffs)
 
         # Discount the expected payoff back to its present value using the risk-free rate
-        discount_factor = np.exp(-model.rate * instrument.maturity)
-        present_value = expected_payoff * discount_factor
+        if getattr(instrument, 'is_pre_discounted', False):
+            # Cash flows occur at various dates and have already been discounted internally by the instrument
+            present_value = expected_payoff
+        else:
+            discount_factor = np.exp(-model.rate * instrument.maturity)
+            present_value = expected_payoff * discount_factor
 
         return float(present_value)
