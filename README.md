@@ -1,27 +1,31 @@
 # Derivatives Pricer
-Python library for derivatives pricing and delta-hedging simulation.
-
-> **Status: Active Development / Work in Progress**
-> *This repository contains the architecture and core modules of a derivatives pricing and risk management library. It is being developed as a preparatory project for advanced quantitative finance studies.*
+Python library for exotic derivatives pricing and quantitative risk management.
 
 ## Overview
-This project is a modular Python-based library designed to price complex financial derivatives and simulate dynamic hedging strategies. The primary focus is on understanding the mathematical mechanics behind volatility surfaces, stochastic volatility models (Heston), exotic options (Autocalls), and the practical realities of managing a trading book (Gamma Bleed).
+This project is a modular Python-based library designed to price complex financial derivatives (with a focus on Autocallables) and extract stable risk sensitivities (greeks). The architecture clearly separates financial instruments, market models, and computational engines, allowing for scalable pricing logic and efficient risk analysis.
 
 ## Key Features
 
-### 1. Pricing Models (`quant_engine/models/` & `structuring/`)
-*   **Vanilla Options:** Analytical pricing using the Black-Scholes-Merton framework.
-*   **Stochastic Volatility:** Implementation of the Heston model for advanced pricing dynamics.
-*   **Exotics (Autocalls):** Monte Carlo simulation engines to price structured products (including barrier conditions and memory effects).
-
-### 2. Market Data & Volatility Surface (`quant_engine/market_data/`)
+### 1. Market Data & Volatility Surface (`quant_engine/market_data/`)
 *   **Data Fetching:** Tools to retrieve live options market data.
-*   **Surface Calibration:** Construction and interpolation of implied volatility surfaces from market data.
+*   **Surface Calibration:** Construction and interpolation of implied volatility surfaces from market quotes, allowing the engine to move beyond flat volatility assumptions.
 
-### 3. Hedging & Risk Management (`quant_engine/risk/`)
-*   **Greeks Calculation:** Computation of first and second-order sensitivities (Delta, Gamma, Vega).
-*   **Delta-Hedging Simulator:** A backtesting module to simulate discrete Delta-Hedging over time.
-*   **Gamma Bleed Analysis:** Tracking the P&L impact of rebalancing costs and market friction against theoretical Gamma.
+### 2. Financial Instruments (`quant_engine/instruments/`)
+*   **Vanilla Options:** Standard European Calls & Puts.
+*   **Exotics (Autocalls):** Complex structured products featuring:
+    *   Early redemption conditions (Autocall barriers).
+    *   Conditional coupons with **Memory Effect**.
+    *   Capital protection via European Down-and-In Put barriers.
+    *   *Design Pattern:* Internal cash-flow discounting capabilities communicated to engines via Duck Typing (`is_pre_discounted`), preventing double-discounting anomalies.
+
+### 3. Computational Engines (`quant_engine/engines/`)
+*   **Analytical Engine:** Closed-form Black-Scholes-Merton solutions for standard derivatives.
+*   **Monte Carlo Engine:** Highly optimized, vectorized stochastic simulator using `NumPy` for path-dependent payoff evaluation over multi-year horizons (e.g., 100,000 paths over 5 years computed in seconds).
+
+### 4. Risk Management (`quant_engine/risk/`)
+*   **Numerical Greeks (Bump & Reprice):** Extraction of delta, vega, and rho using finite central difference schemes.
+*   **Common Random Numbers (CRN):** Implementation of fixed random seeds across spot/volatility shocks to eliminate stochastic noise and guarantee numerically stable greeks.
+*   **Vega Profile Analysis:** Tools to visualize the dynamic nature of an Autocall's Vega (Convexity & Pin Risk), demonstrating the shift from *Short Vega* at inception to *Long Vega* near observation thresholds.
 
 ## Project Architecture
 
@@ -31,10 +35,13 @@ volatility-surface-pricer/
 ├── data/                       # Local market data storage
 │
 ├── examples/                   # Executable scripts for demonstration
-│   ├── demo_surface.py
-│   ├── demo_autocall.py
-│   ├── demo_heston.py
-│   └── hedging_demo.py
+│   ├── 01_volatility_surface.py
+│   ├── 02_monte_carlo_vanilla.py
+│   ├── 03_end_to_end_pricing.py
+│   ├── 04_analytical_vs_mc.py
+│   ├── 05_barrier_vs_vanilla.py
+│   ├── 06_autocall_memory.py
+│   └── 07_autocall_greeks.py
 │
 ├── quant_engine/               # Core library
 │   ├── market_data/
@@ -44,16 +51,15 @@ volatility-surface-pricer/
 │   ├── instruments/
 │   │   ├── base_instrument.py
 │   │   ├── vanilla.py
+│   │   ├── barrier.py
 │   │   └── autocall.py
 │   ├── models/
-│   │   ├── black_scholes.py
-│   │   └── heston.py
+│   │   └── black_scholes.py
 │   ├── engines/
 │   │   ├── analytical.py
 │   │   └── monte_carlo.py
 │   └── risk/
-│       ├── greeks.py
-│       └── delta_hedging.py
+│       └── risk_management.py
 │
 ├── tests/                      # Unit testing suite
 │   ├── test_bs.py
@@ -65,9 +71,13 @@ volatility-surface-pricer/
 ├── run_tests.py                # Test execution script
 └── setup.py                    # Package configuration
 ```
+## Technical Highlights for Code Reviewers
+*   **Memory Efficiency:** Monte Carlo paths are evaluated using 100% vectorized NumPy arrays, avoiding slow Python `for` loops on the scenario axis.
+*   **Immutable Market States:** The Risk Manager utilizes `copy.deepcopy` to simulate market shocks (Up/Down bumps) in strict isolation, preserving the integrity of the base market model.
+*   **Quantitative Pragmatism:** Second-order greeks (gamma) and time-derivatives (theta) were deliberately excluded from the Monte Carlo numerical extraction to avoid the mathematical instability of double-differentiation on simulated noise, favoring analytical approximations where necessary.
 
 ## Tech Stack
 *   **Language:** Python 3.10+
-*   **Core Libraries:** `NumPy`, `Pandas` (Data manipulation), `SciPy` (Optimization & Statistics)
-*   **Performance:** `Numba` (JIT compilation for Monte Carlo optimization)
+*   **Core Libraries:** `NumPy` (vectorized computation), `Pandas` (data manipulation), `SciPy` (optimization & statistics)
+*   **Performance:** `Numba` (JIT compilation utilized to accelerate implied volatility root-finding algorithms)
 *   **Testing:** pytest
