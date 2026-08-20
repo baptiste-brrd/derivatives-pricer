@@ -68,7 +68,6 @@ volatility-surface-pricer/
 │
 ├── README.md
 ├── requirements.txt            # Project dependencies
-├── run_tests.py                # Test execution script
 └── setup.py                    # Package configuration
 ```
 ## Technical Highlights for Code Reviewers
