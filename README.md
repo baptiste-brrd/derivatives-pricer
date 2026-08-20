@@ -80,3 +80,15 @@ volatility-surface-pricer/
 *   **Core Libraries:** `NumPy` (vectorized computation), `Pandas` (data manipulation), `SciPy` (optimization & statistics)
 *   **Performance:** `Numba` (JIT compilation utilized to accelerate implied volatility root-finding algorithms)
 *   **Testing:** pytest
+
+## Potential Future Improvements
+While this project provides a solid baseline for derivatives pricing and risk analysis, there are several interesting avenues that could be explored to further enhance the engine:
+
+### Quantitative Finance 
+*   **Local Volatility:** Moving beyond flat volatility assumptions to integrate a Local Volatility framework. This would allow for more realistic pricing of path-dependent exotic products like Autocallables.
+*   **Early Exercise Options:** Extending the Monte Carlo simulation engine to support options with early-exercise features (such as American options).
+*   **Second-Order Sensitivities:** Expanding the numerical risk engine to compute second-order Greeks (like gamma). This would open the door to simulating more complex delta-gamma hedging strategies.
+
+### Technical & Architecture
+*   **Automated Testing:** Setting up automated testing pipelines to ensure the mathematical stability of the pricing models whenever the codebase is updated.
+*   **Enhanced Type Hinting:** Expanding static typing across all modules to further improve code safety, readability, and maintainability.
